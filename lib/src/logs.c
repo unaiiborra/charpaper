@@ -38,7 +38,6 @@ void log_write(log_level_t level, const char *func, const char *fmt, ...)
 	}
 
 	buf_vwrite(&writer, fmt, args);
-	buf_write(&writer, "\n");
 
 	fprintf((level >= LOG_LVL_WARN) ? stderr : stdout, "%s\n", buf);
 
