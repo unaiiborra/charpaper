@@ -14,7 +14,14 @@ static const char *LOG_LVL_NAMES[] = {
 
 void log_write(log_level_t level, const char *func, const char *fmt, ...)
 {
-	if (level < 0 || level > LOG_LVL_PANIC) {
+	const size_t min_level =
+#ifdef NDEBUG
+		LOG_LVL_INFO;
+#else
+		LOG_LVL_TRACE;
+#endif
+
+	if (level < min_level || level > LOG_LVL_PANIC) {
 		return;
 	}
 
