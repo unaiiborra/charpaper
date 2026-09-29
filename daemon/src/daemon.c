@@ -1,10 +1,15 @@
 #include "daemon.h"
 #include "logs.h"
-#include <stdarg.h>
+#include "renderer.h"
 
 int daemon_run(int argc, const char **argv)
 {
-	LOG_INFO("charpaper started");
 	(void)argc, (void)argv;
+
+	LOG_INFO("charpaper started");
+
+	renderer_init();
+	renderer_loop();
+
 	return 0;
 }
