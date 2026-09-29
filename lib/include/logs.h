@@ -15,8 +15,7 @@ log_write(log_level_t level, const char *func, const char *fmt, ...);
 #define LOG_DEBUG(...) log_write(LOG_LVL_DEBUG, __func__, __VA_ARGS__)
 #define LOG_INFO(...)  log_write(LOG_LVL_INFO, __func__, __VA_ARGS__)
 #define LOG_WARN(...)  log_write(LOG_LVL_WARN, __func__, __VA_ARGS__)
-#define LOG_ERROR(...) log_write(LOG_LVL_ERROR, __func__, __VA_ARGS__)
-#define LOG_FATAL(...) log_write(LOG_LVL_FATAL, __func__, __VA_ARGS__)
+#define LOG_PANIC(...) log_write(LOG_LVL_PANIC, __func__, __VA_ARGS__)
 
 #ifdef NDEBUG
 #undef LOG_DEBUG
