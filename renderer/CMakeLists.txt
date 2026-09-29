@@ -9,4 +9,10 @@ target_include_directories(renderer
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(renderer PRIVATE lib project_warnings)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(WAYLAND_CLIENT REQUIRED IMPORTED_TARGET wayland-client)
+
+target_link_libraries(renderer
+    PUBLIC  PkgConfig::WAYLAND_CLIENT
+    PRIVATE lib project_warnings
+)
