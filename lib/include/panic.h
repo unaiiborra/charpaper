@@ -9,12 +9,11 @@ void throw_panic(const char *func, const char *msg);
 #define __DEBUG_ASSERT_PREFIX(cond) "[debug assertion failed! (" #cond ")]"
 #else
 #define __ASSERT_PREFIX(cond)
-#define __DEBUG_ASSERT_PREFIX(cond)
 #endif
 
 #define ASSERT(cond, msg)                                                                          \
 	do {                                                                                       \
-		if (cond) {                                                                        \
+		if (!cond) {                                                                       \
 			PANIC(__ASSERT_PREFIX(cond) msg);                                          \
 		}                                                                                  \
 	} while (0)
@@ -22,7 +21,7 @@ void throw_panic(const char *func, const char *msg);
 #ifndef NDEBUG
 #define DEBUG_ASSERT(cond, msg)                                                                    \
 	do {                                                                                       \
-		if (cond) {                                                                        \
+		if (!cond) {                                                                       \
 			PANIC(__DEBUG_ASSERT_PREFIX(cond) msg);                                    \
 		}                                                                                  \
 	} while (0)
