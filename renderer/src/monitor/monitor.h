@@ -1,6 +1,7 @@
 #pragma once
 
 #include "monitor/shm_buffer/shm_buffer.h"
+#include "renderer_canvas.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -14,7 +15,10 @@ typedef struct {
 
 	shm_buffer_registry_t buffers;
 
-	uint64_t drawer_id;
+	canvas_drawer_t drawer;
+
+	struct wl_callback *frame_cb;
+	bool video;
 
 	size_t width, height;
 } monitor_data_t;

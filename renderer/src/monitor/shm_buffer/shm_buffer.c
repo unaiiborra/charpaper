@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 
 #include "shm_buffer.h"
-#include "logs.h"
 #include "panic.h"
 #include "renderer_canvas.h"
 #include "state.h"
@@ -30,6 +29,7 @@ static void aloc_shm_buffer(struct shm_buffer_node *node, size_t width, size_t h
 
 	void *buf_ptr = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	ASSERT(buf_ptr != MAP_FAILED, "mmap failed");
+	DEBUG_ASSERT((uintptr_t)buf_ptr % 4096 == 0, "unaligned pointer");
 
 	struct wl_shm_pool *wl_shm_pool = wl_shm_create_pool(RENDERER_STATE.shm, fd, bytes);
 	struct wl_buffer *wl_buffer = wl_shm_pool_create_buffer(
@@ -124,8 +124,6 @@ static void release(void *data, struct wl_buffer *wl_buffer)
 
 	struct shm_buffer_node *node = data;
 	const struct shm_buffer_registry *registry = node->registry;
-
-	LOG_TRACE("released");
 
 	DEBUG_ASSERT(wl_buffer == node->buffer.wl_buffer, "wl_buffer does not match");
 	DEBUG_ASSERT(!node->free, "released a buffer that was marked as free");

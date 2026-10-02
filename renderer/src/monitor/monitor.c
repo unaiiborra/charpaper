@@ -24,6 +24,7 @@ void monitor_register_async(struct wl_registry *reg, uint32_t name, size_t min_b
 		.monitor_data = {
 			.id = name,
 			.buffers = shm_buffer_registy_new(min_buffer_count),
+			.video = true,
 		},
 	};
 

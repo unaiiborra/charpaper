@@ -1,20 +1,11 @@
 #include "logs.h"
+#include "monitor/frame/frame.h"
 #include "monitor/monitor.h"
-#include "monitor/shm_buffer/shm_buffer.h"
 #include "protocols/wlr-layer-shell-unstable-v1-client-protocol.h"
-#include "renderer_canvas.h"
 #include "state.h"
 #include <stddef.h>
 
 /* Layer surface events */
-
-static void tmp_draw(shm_buffer_t *buf)
-{
-	xrgb8888_t *pxl = buf->ptr;
-	for (size_t i = 0; i < buf->width * buf->height; i++) {
-		pxl[i].u32 = 0xff00ff00;
-	}
-}
 
 static void configure(
 	void *data,
@@ -39,12 +30,7 @@ static void configure(
 	monitor->width = width;
 	monitor->height = height;
 
-	shm_buffer_t *buffer = shm_buffer_acquire_async(&monitor->buffers, width, height);
-	tmp_draw(buffer);
-
-	wl_surface_attach(monitor->surface, buffer->wl_buffer, 0, 0);
-	wl_surface_damage(monitor->surface, 0, 0, monitor->width, monitor->height);
-	wl_surface_commit(monitor->surface);
+	monitor_register_to_frame_updates(monitor);
 }
 
 static void closed(void *data, struct zwlr_layer_surface_v1 *ls)
