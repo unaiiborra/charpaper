@@ -1,26 +1,37 @@
 #include "monitor.h"
+#include "layer_surface/layer_surface.h"
 #include "logs.h"
+#include "monitor/shm_buffer/shm_buffer.h"
 #include "panic.h"
 #include "state.h"
 #include <assert.h>
+#include <stddef.h>
 #include <stdlib.h>
 
-static monitor_registry_t **const MONITOR_REGISTRY = &RENDERER_STATE.monitors;
+static monitor_registry_t *const MONITOR_REGISTRY = &RENDERER_STATE.monitors;
 
-monitor_data_t *monitor_register_async(struct wl_registry *reg, uint32_t name)
+void monitor_register_async(struct wl_registry *reg, uint32_t name, size_t min_buffer_count)
 {
-	monitor_registry_t *new_registry = calloc(1, sizeof(monitor_registry_t));
+	struct monitor_node *node = calloc(1, sizeof(struct monitor_node));
 
-	if (*MONITOR_REGISTRY) {
-		new_registry->next = *MONITOR_REGISTRY;
+	if (MONITOR_REGISTRY->root) {
+		node->next = MONITOR_REGISTRY->root;
 	}
 
-	*MONITOR_REGISTRY = new_registry;
+	MONITOR_REGISTRY->root = node;
 
-	new_registry->monitor_data.output = wl_registry_bind(reg, name, &wl_output_interface, 1);
-	ASSERT(new_registry->monitor_data.output, "Coul not bind to monitor");
+	*node = (struct monitor_node){
+		.monitor_data = {
+			.id = name,
+			.buffers = shm_buffer_registy_new(min_buffer_count),
+		},
+	};
+
+	node->monitor_data.output = wl_registry_bind(reg, name, &wl_output_interface, 1);
+
+	ASSERT(node->monitor_data.output, "Coul not bind to monitor");
 
 	LOG_TRACE("Monitor %d registered", name);
 
-	return &new_registry->monitor_data;
+	monitor_configure_as_background_async(&node->monitor_data);
 }

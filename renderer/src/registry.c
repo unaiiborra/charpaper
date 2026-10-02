@@ -1,14 +1,14 @@
-#include "renderer.h"
 #include "logs.h"
 #include "monitor/monitor.h"
 #include "panic.h"
 #include "protocols/wlr-layer-shell-unstable-v1-client-protocol.h"
+#include "renderer.h"
 #include "state.h"
 #include <string.h>
 #include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
 
-renderer_state RENDERER_STATE = {0}; /* Global renderer state */
+renderer_state_t RENDERER_STATE = {0}; /* Global renderer state */
 
 static void registry_global(
 	__attribute__((unused)) void *data,
@@ -22,8 +22,7 @@ static void registry_global(
 
 	IF_IFACE_EQ(wl_output_interface.name)
 	{
-		monitor_data_t *monitor = monitor_register_async(reg, name);
-		monitor_configure_as_background_async(monitor);
+		monitor_register_async(reg, name, 1);
 		return;
 	}
 
@@ -64,6 +63,7 @@ static const struct wl_registry_listener registry_listener = {
 
 void renderer_init(void)
 {
+
 	RENDERER_STATE.display = wl_display_connect(NULL);
 
 	ASSERT(RENDERER_STATE.display, "Cannot connect to Wayland display");
@@ -86,14 +86,6 @@ void renderer_init(void)
 void renderer_loop(void)
 {
 	while (1) {
-		for (monitor_registry_t *m = RENDERER_STATE.monitors; m; m = m->next) {
-			monitor_data_t *monitor = &m->monitor_data;
-
-			if (!monitor->configured) {
-			}
-		}
-
-		monitor_handle_received_events_async(&RENDERER_STATE.monitors);
 		wl_display_dispatch(RENDERER_STATE.display);
 	}
 }

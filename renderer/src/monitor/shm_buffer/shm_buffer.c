@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 
 #include "shm_buffer.h"
+#include "logs.h"
 #include "panic.h"
 #include "renderer_canvas.h"
 #include "state.h"
@@ -12,7 +13,11 @@
 #include <unistd.h>
 #include <wayland-client-protocol.h>
 
-static void aloc_shm_buffer(shm_buffer_t *buffer, size_t width, size_t height)
+/* Private helpers */
+
+static const struct wl_buffer_listener WL_BUFFER_LISTENER;
+
+static void aloc_shm_buffer(struct shm_buffer_node *node, size_t width, size_t height)
 {
 	size_t stride = width * sizeof(xrgb8888_t);
 	size_t bytes = stride * height;
@@ -36,10 +41,12 @@ static void aloc_shm_buffer(shm_buffer_t *buffer, size_t width, size_t height)
 		WL_SHM_FORMAT_XRGB8888
 	);
 
+	wl_buffer_add_listener(wl_buffer, &WL_BUFFER_LISTENER, node);
+
 	wl_shm_pool_destroy(wl_shm_pool);
 	close(fd);
 
-	*buffer = (shm_buffer_t){
+	node->buffer = (shm_buffer_t){
 		.wl_buffer = wl_buffer,
 		.ptr = buf_ptr,
 		.width = width,
@@ -59,45 +66,133 @@ static void free_shm_buffer(shm_buffer_t *buffer)
 	*buffer = (shm_buffer_t){0};
 }
 
-shm_buffer_t *shm_buffer_acquire_async(shm_buffer_registry_t *registry, size_t width, size_t height)
+static struct shm_buffer_node *alloc_node(
+	shm_buffer_registry_t *registry,
+	size_t width,
+	size_t height
+)
 {
-	/* Find a free buffer in the list, reallocate if size changed */
-	for (struct shm_buffer_node *n = registry->root; n; n = n->next) {
-		if (n->free) {
-			if (n->buffer.width != width || n->buffer.height != height) {
-				/* Size changed, reallocate with correct size */
-				free_shm_buffer(&n->buffer);
-				aloc_shm_buffer(&n->buffer, width, height);
+	struct shm_buffer_node *node = malloc(sizeof(struct shm_buffer_node));
+	ASSERT(node, "malloc failed");
+
+	*node = (struct shm_buffer_node){
+		.next = registry->root,
+		.registry = registry,
+		.free = true,
+		.buffer = {0},
+	};
+
+	aloc_shm_buffer(node, width, height);
+
+	registry->root = node;
+	registry->count++;
+
+	return node;
+}
+
+static void free_node(struct shm_buffer_node *node)
+{
+	struct shm_buffer_registry *registry = node->registry;
+	DEBUG_ASSERT(registry->count > 0, "free node called when node count is 0");
+
+	struct shm_buffer_node *prev = NULL;
+
+	for (struct shm_buffer_node *n = registry->root; true; n = n->next) {
+		if (n == node) {
+			if (prev) {
+				prev->next = node->next;
+			} else {
+				/* The node is the root, move the root forward */
+				registry->root = node->next;
 			}
 
-			n->free = false;
-			return &n->buffer;
+			break;
+		}
+
+		DEBUG_ASSERT(n->next, "The provided node is not present in the registry");
+		prev = n;
+	}
+
+	free_shm_buffer(&node->buffer);
+	free(node);
+	registry->count--;
+}
+
+static void release(void *data, struct wl_buffer *wl_buffer)
+{
+	(void)wl_buffer;
+
+	struct shm_buffer_node *node = data;
+	const struct shm_buffer_registry *registry = node->registry;
+
+	LOG_TRACE("released");
+
+	DEBUG_ASSERT(wl_buffer == node->buffer.wl_buffer, "wl_buffer does not match");
+	DEBUG_ASSERT(!node->free, "released a buffer that was marked as free");
+
+	node->free = true;
+
+	if (registry->count > registry->registry_min) {
+		free_node(node);
+	}
+}
+
+static const struct wl_buffer_listener WL_BUFFER_LISTENER = {.release = release};
+
+/* Registry constructor and destructor */
+
+shm_buffer_registry_t shm_buffer_registy_new(size_t min_buffer_count)
+{
+	return (shm_buffer_registry_t){
+		.registry_min = min_buffer_count,
+		.root = NULL,
+		.count = 0, /* Min buffer count will be allocated at the first call to acquire */
+	};
+}
+
+void shm_buffer_registry_destroy(shm_buffer_registry_t *registry)
+{
+	struct shm_buffer_node *curr = registry->root;
+
+	while (curr) {
+		struct shm_buffer_node *next = curr->next;
+		free_shm_buffer(&curr->buffer);
+		free(curr);
+
+		curr = next;
+	}
+
+	*registry = (shm_buffer_registry_t){0};
+}
+
+/* Buffer control */
+shm_buffer_t *shm_buffer_acquire_async(shm_buffer_registry_t *registry, size_t width, size_t height)
+{
+	while (true) {
+		/* Find a free buffer in the list, reallocate if size changed */
+		for (struct shm_buffer_node *n = registry->root; n; n = n->next) {
+			if (n->free) {
+				if (n->buffer.width != width || n->buffer.height != height) {
+					/* Size changed, reallocate with correct size */
+					free_shm_buffer(&n->buffer);
+					aloc_shm_buffer(n, width, height);
+				}
+
+				n->free = false;
+				return &n->buffer;
+			}
+		}
+
+		/* No free buffer is available, create either the minimum required count (first
+		 * acquire call) or generate an extra buffer */
+		size_t remaining = (registry->count < registry->registry_min)
+					   ? registry->registry_min - registry->count
+					   : 1;
+
+		for (size_t i = 0; i < remaining; i++) {
+			alloc_node(registry, width, height);
 		}
 	}
-
-	/* No free buffer is available, create either the minimum required count (first acquire
-	 * call) or generate an extra buffer */
-	size_t remaining = (registry->count < registry->registry_min)
-				   ? registry->registry_min - registry->count
-				   : 1;
-
-	for (size_t i = 0; i < remaining; i++) {
-		struct shm_buffer_node *node = malloc(sizeof(struct shm_buffer_node));
-		ASSERT(node, "malloc failed");
-
-		*node = (struct shm_buffer_node){
-			.next = registry->root,
-			.free = true,
-			.buffer = {0},
-		};
-
-		aloc_shm_buffer(&node->buffer, width, height);
-		registry->root = node;
-		registry->count++;
-	}
-
-	registry->root->free = false;
-	return &registry->root->buffer;
 }
 
 void shm_buffer_release_async(shm_buffer_registry_t *registry, shm_buffer_t *buffer)
@@ -113,25 +208,5 @@ void shm_buffer_release_async(shm_buffer_registry_t *registry, shm_buffer_t *buf
 	}
 
 	/* There are more buffers than the minimum required, remove the node from the list */
-	struct shm_buffer_node *prev = NULL;
-
-	for (struct shm_buffer_node *n = registry->root; true; n = n->next) {
-		if (n == node) {
-			if (prev) {
-				prev->next = node->next;
-			} else {
-				/* The node is the root, move the root forward */
-				registry->root = node->next;
-			}
-
-			break;
-		}
-
-		ASSERT(n->next, "The provided node is not present in the registry");
-		prev = n;
-	}
-
-	free_shm_buffer(buffer);
-	free(node);
-	registry->count--;
+	free_node(node);
 }

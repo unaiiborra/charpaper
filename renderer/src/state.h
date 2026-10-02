@@ -8,7 +8,7 @@ typedef struct {
 	struct zwlr_layer_shell_v1 *layer_shell;
 	struct wl_shm *shm;
 
-	monitor_registry_t *monitors;
-} renderer_state;
+	monitor_registry_t monitors;
+} renderer_state_t;
 
-extern renderer_state RENDERER_STATE;
+extern renderer_state_t RENDERER_STATE;

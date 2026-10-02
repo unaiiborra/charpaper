@@ -1,32 +1,29 @@
 #pragma once
 
+#include "monitor/shm_buffer/shm_buffer.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <wayland-client-protocol.h>
 
 typedef struct {
-	struct wl_buffer *wl_buffer;
-	void *ptr;
-	size_t size; /* In bytes */
-} shm_buffer;
-
-typedef struct {
-	bool configured;
+	uint32_t id; /* name */
 	struct wl_output *output;
 	struct wl_surface *surface;
 	struct zwlr_layer_surface_v1 *layer_surface;
-	shm_buffer buffer;
 
-	bool event_received;
+	shm_buffer_registry_t buffers;
+
+	uint64_t drawer_id;
+
 	size_t width, height;
 } monitor_data_t;
 
 typedef struct monitor_registry {
-	struct monitor_registry *next;
-	monitor_data_t monitor_data;
+	struct monitor_node {
+		struct monitor_node *next;
+		monitor_data_t monitor_data;
+	} *root;
 } monitor_registry_t;
 
-monitor_data_t *monitor_register_async(struct wl_registry *reg, uint32_t name);
-void monitor_configure_as_background_async(monitor_data_t *monitor);
-void monitor_handle_received_events_async(monitor_registry_t **monitors);
+void monitor_register_async(struct wl_registry *reg, uint32_t name, size_t min_buffer_count);

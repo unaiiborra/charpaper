@@ -13,7 +13,7 @@ void throw_panic(const char *func, const char *msg);
 
 #define ASSERT(cond, msg)                                                                          \
 	do {                                                                                       \
-		if (!cond) {                                                                       \
+		if (!(cond)) {                                                                     \
 			PANIC(__ASSERT_PREFIX(cond) msg);                                          \
 		}                                                                                  \
 	} while (0)
@@ -21,7 +21,7 @@ void throw_panic(const char *func, const char *msg);
 #ifndef NDEBUG
 #define DEBUG_ASSERT(cond, msg)                                                                    \
 	do {                                                                                       \
-		if (!cond) {                                                                       \
+		if (!(cond)) {                                                                     \
 			PANIC(__DEBUG_ASSERT_PREFIX(cond) msg);                                    \
 		}                                                                                  \
 	} while (0)
