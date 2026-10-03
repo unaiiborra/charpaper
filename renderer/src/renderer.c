@@ -1,5 +1,9 @@
 #include "renderer.h"
+#include "logs.h"
+#include "monitor/frame/frame.h"
+#include "monitor/layer_surface/layer_surface.h"
 #include "monitor/monitor.h"
+#include "monitor/shm_buffer/shm_buffer.h"
 #include "registry.h"
 #include "state.h"
 #include <string.h>
@@ -10,11 +14,9 @@ void renderer_init(void)
 	renderer_registry_init();
 }
 
-void renderer_loop(void)
+void renderer_step(void)
 {
-	while (1) {
-		wl_display_dispatch(RENDERER_STATE.display);
-	}
+	wl_display_dispatch(RENDERER_STATE.display);
 }
 
 static void config_monitor(monitor_data_t *monitor, render_monitor_config_t cfg)
@@ -39,6 +41,16 @@ int renderer_setup_monitor(const char *monitor_name, render_monitor_config_t con
 	}
 
 	config_monitor(monitor, config);
+
+	monitor->buffers = shm_buffer_registy_new(config.is_animated ? 2 : 1);
+
+	monitor_configure_as_background_async(monitor);
+
+	wl_display_roundtrip(RENDERER_STATE.display);
+
+	monitor_register_to_frame_updates(monitor);
+
+	LOG_INFO("%s setup", monitor_name);
 
 	return 0;
 }

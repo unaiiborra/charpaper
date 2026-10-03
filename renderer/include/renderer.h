@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 void renderer_init(void);
-void renderer_loop(void);
+void renderer_step(void);
 
 typedef struct renderer_monitor_config {
 	bool is_animated;

@@ -16,7 +16,7 @@ static void std_draw(canvas_t c)
 	}
 }
 
-shm_buffer_t *monitor_draw_frame_buffer(monitor_data_t *monitor)
+static shm_buffer_t *monitor_draw_frame_buffer(monitor_data_t *monitor)
 {
 	LOG_TRACE(
 		"monitor %d frame draw request %ldx%ld",
@@ -24,6 +24,10 @@ shm_buffer_t *monitor_draw_frame_buffer(monitor_data_t *monitor)
 		monitor->width,
 		monitor->height
 	);
+
+	if (monitor->width == 0 || monitor->height == 0) {
+		return NULL;
+	}
 
 	canvas_drawer_t drawer = monitor->config.drawer ? monitor->config.drawer : std_draw;
 
@@ -43,6 +47,10 @@ shm_buffer_t *monitor_draw_frame_buffer(monitor_data_t *monitor)
 void monitor_register_to_frame_updates(monitor_data_t *monitor)
 {
 	shm_buffer_t *buffer = monitor_draw_frame_buffer(monitor);
+
+	if (!buffer) {
+		return;
+	}
 
 	if (monitor->config.is_animated) {
 		monitor->frame_cb = wl_surface_frame(monitor->surface);
