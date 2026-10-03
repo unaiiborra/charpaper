@@ -22,6 +22,7 @@ void renderer_step(void)
 static void config_monitor(monitor_data_t *monitor, render_monitor_config_t cfg)
 {
 	monitor->config.drawer = cfg.drawer;
+	monitor->config.drawer_data = cfg.drawer_data;
 	monitor->config.is_animated = cfg.is_animated;
 }
 
@@ -48,7 +49,7 @@ int renderer_setup_monitor(const char *monitor_name, render_monitor_config_t con
 
 	wl_display_roundtrip(RENDERER_STATE.display);
 
-	monitor_register_to_frame_updates(monitor);
+	monitor_start_frame_loop_async(monitor);
 
 	LOG_INFO("%s setup", monitor_name);
 

@@ -10,6 +10,7 @@
 typedef struct {
 	bool is_animated;
 	canvas_drawer_t drawer;
+	void *drawer_data;
 } monitor_config_t;
 
 typedef struct {
@@ -51,6 +52,12 @@ typedef struct {
 	struct wl_callback *frame_cb;
 
 	size_t width, height;
+
+	uint64_t frame;
+	uint32_t last_time_ms;
+	bool has_last_time;
+	double total_time;
+
 	shm_buffer_registry_t buffers;
 } monitor_data_t;
 
