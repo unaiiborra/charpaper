@@ -44,7 +44,7 @@ void monitor_register_to_frame_updates(monitor_data_t *monitor)
 {
 	shm_buffer_t *buffer = monitor_draw_frame_buffer(monitor);
 
-	if (monitor->config.video) {
+	if (monitor->config.is_animated) {
 		monitor->frame_cb = wl_surface_frame(monitor->surface);
 		wl_callback_add_listener(monitor->frame_cb, &FRAME_LISTENER, monitor);
 	} else {

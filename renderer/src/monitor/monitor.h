@@ -8,7 +8,7 @@
 #include <wayland-client-protocol.h>
 
 typedef struct {
-	bool video;
+	bool is_animated;
 	canvas_drawer_t drawer;
 } monitor_config_t;
 

@@ -62,9 +62,8 @@ static const struct wl_registry_listener REGISTRY_LISTENER = {
 	.global_remove = registry_global_remove,
 };
 
-void renderer_init(void)
+void renderer_registry_init(void)
 {
-
 	RENDERER_STATE.display = wl_display_connect(NULL);
 
 	ASSERT(RENDERER_STATE.display, "Cannot connect to Wayland display");
@@ -91,11 +90,4 @@ void renderer_init(void)
 	}
 
 	monitor_list_free(list);
-}
-
-void renderer_loop(void)
-{
-	while (1) {
-		wl_display_dispatch(RENDERER_STATE.display);
-	}
 }
