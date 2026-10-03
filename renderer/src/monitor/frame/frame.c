@@ -25,7 +25,7 @@ shm_buffer_t *monitor_draw_frame_buffer(monitor_data_t *monitor)
 		monitor->height
 	);
 
-	canvas_drawer_t drawer = monitor->drawer ? monitor->drawer : std_draw;
+	canvas_drawer_t drawer = monitor->config.drawer ? monitor->config.drawer : std_draw;
 
 	shm_buffer_t *buffer =
 		shm_buffer_acquire_async(&monitor->buffers, monitor->width, monitor->height);
@@ -44,7 +44,7 @@ void monitor_register_to_frame_updates(monitor_data_t *monitor)
 {
 	shm_buffer_t *buffer = monitor_draw_frame_buffer(monitor);
 
-	if (monitor->video) {
+	if (monitor->config.video) {
 		monitor->frame_cb = wl_surface_frame(monitor->surface);
 		wl_callback_add_listener(monitor->frame_cb, &FRAME_LISTENER, monitor);
 	} else {

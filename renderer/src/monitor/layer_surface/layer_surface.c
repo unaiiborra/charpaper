@@ -1,5 +1,4 @@
 #include "logs.h"
-#include "monitor/frame/frame.h"
 #include "monitor/monitor.h"
 #include "protocols/wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "state.h"
@@ -29,8 +28,6 @@ static void configure(
 	/* Update width and height */
 	monitor->width = width;
 	monitor->height = height;
-
-	monitor_register_to_frame_updates(monitor);
 }
 
 static void closed(void *data, struct zwlr_layer_surface_v1 *ls)

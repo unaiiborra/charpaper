@@ -1,9 +1,10 @@
 #include "logs.h"
-#include "monitor/monitor.h"
+#include "monitor/register/register.h"
 #include "panic.h"
 #include "protocols/wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "renderer.h"
 #include "state.h"
+#include <stddef.h>
 #include <string.h>
 #include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
@@ -22,7 +23,7 @@ static void registry_global(
 
 	IF_IFACE_EQ(wl_output_interface.name)
 	{
-		monitor_register_async(reg, name, 1);
+		monitor_register_async(reg, name, version);
 		return;
 	}
 
@@ -56,7 +57,7 @@ static void registry_global_remove(void *data, struct wl_registry *reg, uint32_t
 	(void)data, (void)reg, (void)name;
 }
 
-static const struct wl_registry_listener registry_listener = {
+static const struct wl_registry_listener REGISTRY_LISTENER = {
 	.global = registry_global,
 	.global_remove = registry_global_remove,
 };
@@ -70,10 +71,11 @@ void renderer_init(void)
 
 	wl_registry_add_listener(
 		wl_display_get_registry(RENDERER_STATE.display),
-		&registry_listener,
+		&REGISTRY_LISTENER,
 		NULL
 	);
 
+	wl_display_roundtrip(RENDERER_STATE.display);
 	wl_display_roundtrip(RENDERER_STATE.display);
 
 	ASSERT(RENDERER_STATE.display && RENDERER_STATE.compositor && RENDERER_STATE.shm &&
@@ -81,6 +83,14 @@ void renderer_init(void)
 	       "Renderer failed to initialize");
 
 	LOG_TRACE("renderer initialized");
+	const char **list = NULL;
+	size_t count = monitor_list_aloc(&list);
+
+	for (size_t i = 0; i < count; i++) {
+		LOG_INFO("Detected monitor %s", list[i]);
+	}
+
+	monitor_list_free(list);
 }
 
 void renderer_loop(void)
