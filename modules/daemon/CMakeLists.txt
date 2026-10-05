@@ -10,5 +10,5 @@ target_include_directories(daemon
 )
 
 target_link_libraries(daemon
-        PRIVATE renderer lib project_warnings charpaper_headers
+        PRIVATE project_warnings lib charpaper_headers wayland_renderer
 )
