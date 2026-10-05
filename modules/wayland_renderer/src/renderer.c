@@ -75,6 +75,7 @@ static int renderer_setup_monitor(
 }
 
 const chp_renderer_interface WAYLAND_RENDERER_INTERFACE = {
+	.name = "charpaper_wayland_renderer",
 	.create = renderer_create,
 	.destroy = renderer_destroy,
 	.canvas_list = monitor_list_aloc,

@@ -13,6 +13,8 @@ typedef struct {
 } chp_canvas_config_t;
 
 typedef struct {
+	const char *name;
+
 	struct chp_renderer *(*create)(void *data);
 	void (*destroy)(struct chp_renderer *renderer);
 
