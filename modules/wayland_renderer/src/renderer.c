@@ -75,10 +75,10 @@ static int renderer_setup_monitor(
 }
 
 const chp_renderer_interface WAYLAND_RENDERER_INTERFACE = {
-	.chp_renderer_create = renderer_create,
-	.chp_renderer_destroy = renderer_destroy,
-	.chp_canvas_list = monitor_list_aloc,
-	.chp_canvas_list_free = monitor_list_free,
-	.chp_renderer_setup_monitor = renderer_setup_monitor,
-	.chp_renderer_step = renderer_step,
+	.create = renderer_create,
+	.destroy = renderer_destroy,
+	.canvas_list = monitor_list_aloc,
+	.canvas_list_free = monitor_list_free,
+	.setup_canvas = renderer_setup_monitor,
+	.step = renderer_step,
 };

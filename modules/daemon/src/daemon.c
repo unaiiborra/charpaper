@@ -21,9 +21,9 @@ int daemon_run(int argc, const char **argv)
 
 	LOG_INFO("charpaper started");
 
-	struct chp_renderer *renderer = WAYLAND_RENDERER_INTERFACE.chp_renderer_create(NULL);
+	struct chp_renderer *renderer = WAYLAND_RENDERER_INTERFACE.create(NULL);
 
-	if (WAYLAND_RENDERER_INTERFACE.chp_renderer_setup_monitor(
+	if (WAYLAND_RENDERER_INTERFACE.setup_canvas(
 		    renderer,
 		    "DP-1",
 		    (chp_canvas_config_t){
@@ -36,7 +36,7 @@ int daemon_run(int argc, const char **argv)
 	}
 
 	while (1) {
-		WAYLAND_RENDERER_INTERFACE.chp_renderer_step(renderer);
+		WAYLAND_RENDERER_INTERFACE.step(renderer);
 	}
 
 	return 0;

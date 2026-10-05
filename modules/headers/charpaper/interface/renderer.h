@@ -13,17 +13,17 @@ typedef struct {
 } chp_canvas_config_t;
 
 typedef struct {
-	struct chp_renderer *(*chp_renderer_create)(void *data);
-	void (*chp_renderer_destroy)(struct chp_renderer *renderer);
+	struct chp_renderer *(*create)(void *data);
+	void (*destroy)(struct chp_renderer *renderer);
 
-	size_t (*chp_canvas_list)(struct chp_renderer *renderer, const char ***list);
-	void (*chp_canvas_list_free)(struct chp_renderer *renderer, const char **list);
+	size_t (*canvas_list)(struct chp_renderer *renderer, const char ***list);
+	void (*canvas_list_free)(struct chp_renderer *renderer, const char **list);
 
-	int (*chp_renderer_setup_monitor)(
+	int (*setup_canvas)(
 		struct chp_renderer *renderer,
 		const char *monitor,
 		chp_canvas_config_t config
 	);
 
-	void (*chp_renderer_step)(struct chp_renderer *renderer);
+	void (*step)(struct chp_renderer *renderer);
 } chp_renderer_interface;
