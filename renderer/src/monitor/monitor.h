@@ -1,7 +1,7 @@
 #pragma once
 
 #include "monitor/shm_buffer/shm_buffer.h"
-#include "renderer_canvas.h"
+#include <charpaper/canvas.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -9,7 +9,7 @@
 
 typedef struct {
 	bool is_animated;
-	canvas_drawer_t drawer;
+	chp_canvas_drawer_t drawer;
 	void *drawer_data;
 } monitor_config_t;
 

@@ -1,12 +1,12 @@
 #include "daemon.h"
+#include "charpaper/interface/renderer.h"
 #include "logs.h"
-#include "renderer.h"
-#include "renderer_canvas.h"
+#include "wayland_renderer.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-static void drawer(void *data, const canvas_t *canvas, const frame_info_t *info)
+static void drawer(void *data, const chp_canvas_t *canvas, const chp_frame_info_t *info)
 {
 	(void)data, (void)info;
 
@@ -21,18 +21,22 @@ int daemon_run(int argc, const char **argv)
 
 	LOG_INFO("charpaper started");
 
-	renderer_init();
+	struct chp_renderer *renderer = WAYLAND_RENDERER_INTERFACE.chp_renderer_create(NULL);
 
-	renderer_setup_monitor(
-		"DP-1",
-		(render_monitor_config_t){
-			.drawer = drawer,
-			.is_animated = true,
-		}
-	);
+	if (WAYLAND_RENDERER_INTERFACE.chp_renderer_setup_monitor(
+		    renderer,
+		    "DP-1",
+		    (chp_canvas_config_t){
+			    .drawer = drawer,
+			    .drawer_data = NULL,
+			    .is_animated = true,
+		    }
+	    ) < 0) {
+		return 1;
+	}
 
 	while (1) {
-		renderer_step();
+		WAYLAND_RENDERER_INTERFACE.chp_renderer_step(renderer);
 	}
 
 	return 0;

@@ -2,9 +2,9 @@
 
 #include "shm_buffer.h"
 #include "panic.h"
-#include "renderer_canvas.h"
-#include "state.h"
+#include "renderer.h"
 #include <assert.h>
+#include <charpaper/rgb.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -16,7 +16,12 @@
 
 static const struct wl_buffer_listener WL_BUFFER_LISTENER;
 
-static void aloc_shm_buffer(struct shm_buffer_node *node, size_t width, size_t height)
+static void aloc_shm_buffer(
+	wayland_renderer *renderer,
+	struct shm_buffer_node *node,
+	size_t width,
+	size_t height
+)
 {
 	size_t stride = width * sizeof(xrgb8888_t);
 	size_t bytes = stride * height;
@@ -31,7 +36,7 @@ static void aloc_shm_buffer(struct shm_buffer_node *node, size_t width, size_t h
 	ASSERT(buf_ptr != MAP_FAILED, "mmap failed");
 	DEBUG_ASSERT((uintptr_t)buf_ptr % 4096 == 0, "unaligned pointer");
 
-	struct wl_shm_pool *wl_shm_pool = wl_shm_create_pool(RENDERER_STATE.shm, fd, bytes);
+	struct wl_shm_pool *wl_shm_pool = wl_shm_create_pool(renderer->shm, fd, bytes);
 	struct wl_buffer *wl_buffer = wl_shm_pool_create_buffer(
 		wl_shm_pool,
 		0,
@@ -67,6 +72,7 @@ static void free_shm_buffer(shm_buffer_t *buffer)
 }
 
 static struct shm_buffer_node *alloc_node(
+	wayland_renderer *renderer,
 	shm_buffer_registry_t *registry,
 	size_t width,
 	size_t height
@@ -82,7 +88,7 @@ static struct shm_buffer_node *alloc_node(
 		.buffer = {0},
 	};
 
-	aloc_shm_buffer(node, width, height);
+	aloc_shm_buffer(renderer, node, width, height);
 
 	registry->root = node;
 	registry->count++;
@@ -164,7 +170,12 @@ void shm_buffer_registry_destroy(shm_buffer_registry_t *registry)
 }
 
 /* Buffer control */
-shm_buffer_t *shm_buffer_acquire_async(shm_buffer_registry_t *registry, size_t width, size_t height)
+shm_buffer_t *shm_buffer_acquire_async(
+	wayland_renderer *renderer,
+	shm_buffer_registry_t *registry,
+	size_t width,
+	size_t height
+)
 {
 	while (true) {
 		/* Find a free buffer in the list, reallocate if size changed */
@@ -173,7 +184,7 @@ shm_buffer_t *shm_buffer_acquire_async(shm_buffer_registry_t *registry, size_t w
 				if (n->buffer.width != width || n->buffer.height != height) {
 					/* Size changed, reallocate with correct size */
 					free_shm_buffer(&n->buffer);
-					aloc_shm_buffer(n, width, height);
+					aloc_shm_buffer(renderer, n, width, height);
 				}
 
 				n->free = false;
@@ -188,7 +199,7 @@ shm_buffer_t *shm_buffer_acquire_async(shm_buffer_registry_t *registry, size_t w
 					   : 1;
 
 		for (size_t i = 0; i < remaining; i++) {
-			alloc_node(registry, width, height);
+			alloc_node(renderer, registry, width, height);
 		}
 	}
 }

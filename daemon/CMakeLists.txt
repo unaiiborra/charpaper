@@ -9,4 +9,6 @@ target_include_directories(daemon
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(daemon PRIVATE renderer lib project_warnings)
+target_link_libraries(daemon
+        PRIVATE renderer lib project_warnings charpaper_headers
+)

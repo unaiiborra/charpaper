@@ -1,14 +1,12 @@
 #include "monitor/monitor.h"
 #include "panic.h"
 #include "register.h"
-#include "state.h"
+#include "renderer.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
-static monitor_registry_t *const MONITOR_REGISTRY = &RENDERER_STATE.monitors;
-
-size_t monitor_list_aloc(const char ***list)
+size_t monitor_list_aloc(wayland_renderer *renderer, const char ***list)
 {
 	DEBUG_ASSERT(*list == NULL, "provided list must be zero initialized");
 
@@ -17,7 +15,7 @@ size_t monitor_list_aloc(const char ***list)
 	size_t node_count = 0;
 	size_t len = 0;
 
-	for (struct monitor_node *node = MONITOR_REGISTRY->root; node; node = node->next) {
+	for (struct monitor_node *node = renderer->monitors.root; node; node = node->next) {
 		if (!node->monitor_data.info.done) {
 			continue;
 		}
@@ -40,7 +38,7 @@ size_t monitor_list_aloc(const char ***list)
 
 	/* Copy the node information into the list */
 
-	struct monitor_node *curr = MONITOR_REGISTRY->root;
+	struct monitor_node *curr = renderer->monitors.root;
 
 	size_t buf_idx = 0;
 	size_t str_idx = 0;
@@ -65,8 +63,10 @@ size_t monitor_list_aloc(const char ***list)
 	return node_count;
 }
 
-void monitor_list_free(const char **list)
+void monitor_list_free(wayland_renderer *renderer, const char **list)
 {
+	(void)renderer;
+
 	if (list) {
 		free((void *)*list); /* free string */
 		free((void **)list); /* free buffer */

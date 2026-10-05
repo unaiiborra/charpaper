@@ -1,25 +1,29 @@
 #include "monitor/register/register.h"
+#include "charpaper/interface/renderer.h"
 #include "logs.h"
 #include "monitor/monitor.h"
 #include "monitor/register/output/output.h"
 #include "panic.h"
-#include "state.h"
+#include "renderer.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 
-static monitor_registry_t *const MONITOR_REGISTRY = &RENDERER_STATE.monitors;
-
-void monitor_register_async(struct wl_registry *wl_registry, uint32_t name, uint32_t version)
+void monitor_register_async(
+	wayland_renderer *renderer,
+	struct wl_registry *wl_registry,
+	uint32_t name,
+	uint32_t version
+)
 {
 	struct monitor_node *node = calloc(1, sizeof(struct monitor_node));
 
 	*node = (struct monitor_node){
 		.monitor_data = {.id = name},
-		.next = MONITOR_REGISTRY->root,
+		.next = renderer->monitors.root,
 	};
-	MONITOR_REGISTRY->root = node;
+	renderer->monitors.root = node;
 
 	node->monitor_data.output = wl_registry_bind(
 		wl_registry,

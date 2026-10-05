@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+typedef struct chp_renderer wayland_renderer;
+
 typedef struct {
 	struct wl_buffer *wl_buffer;
 	void *ptr;
@@ -27,6 +29,7 @@ shm_buffer_registry_t shm_buffer_registy_new(size_t min_buffer_count);
 void shm_buffer_registry_destroy(shm_buffer_registry_t *registry);
 
 shm_buffer_t *shm_buffer_acquire_async(
+	wayland_renderer *renderer,
 	shm_buffer_registry_t *registry,
 	size_t width,
 	size_t height

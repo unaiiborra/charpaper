@@ -15,5 +15,5 @@ pkg_check_modules(WAYLAND_CLIENT REQUIRED IMPORTED_TARGET wayland-client)
 
 target_link_libraries(renderer
     PUBLIC  PkgConfig::WAYLAND_CLIENT
-    PRIVATE lib project_warnings
+    PRIVATE lib project_warnings charpaper_headers
 )

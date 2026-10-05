@@ -1,3 +1,5 @@
 #pragma once
 
-void renderer_registry_init(void);
+#include "charpaper/interface/renderer.h"
+
+void renderer_registry_init(wayland_renderer *renderer);

@@ -3,33 +3,32 @@
 #include "panic.h"
 #include "protocols/wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "renderer.h"
-#include "state.h"
 #include <stddef.h>
 #include <string.h>
 #include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
 
-renderer_state_t RENDERER_STATE = {0}; /* Global renderer state */
-
 static void registry_global(
-	__attribute__((unused)) void *data,
+	void *data,
 	struct wl_registry *reg,
 	uint32_t name,
 	const char *iface,
 	uint32_t version
 )
 {
+	wayland_renderer *renderer = data;
+
 #define IF_IFACE_EQ(name) if (strcmp(iface, name) == 0)
 
 	IF_IFACE_EQ(wl_output_interface.name)
 	{
-		monitor_register_async(reg, name, version);
+		monitor_register_async(renderer, reg, name, version);
 		return;
 	}
 
 	IF_IFACE_EQ(wl_compositor_interface.name)
 	{
-		RENDERER_STATE.compositor = wl_registry_bind(
+		renderer->compositor = wl_registry_bind(
 			reg,
 			name,
 			&wl_compositor_interface,
@@ -40,13 +39,13 @@ static void registry_global(
 
 	IF_IFACE_EQ(wl_shm_interface.name)
 	{
-		RENDERER_STATE.shm = wl_registry_bind(reg, name, &wl_shm_interface, 1);
+		renderer->shm = wl_registry_bind(reg, name, &wl_shm_interface, 1);
 		return;
 	}
 
 	IF_IFACE_EQ(zwlr_layer_shell_v1_interface.name)
 	{
-		RENDERER_STATE.layer_shell =
+		renderer->layer_shell =
 			wl_registry_bind(reg, name, &zwlr_layer_shell_v1_interface, 1);
 		return;
 	}
@@ -62,32 +61,31 @@ static const struct wl_registry_listener REGISTRY_LISTENER = {
 	.global_remove = registry_global_remove,
 };
 
-void renderer_registry_init(void)
+void renderer_registry_init(wayland_renderer *renderer)
 {
-	RENDERER_STATE.display = wl_display_connect(NULL);
+	renderer->display = wl_display_connect(NULL);
 
-	ASSERT(RENDERER_STATE.display, "Cannot connect to Wayland display");
+	ASSERT(renderer->display, "Cannot connect to Wayland display");
 
 	wl_registry_add_listener(
-		wl_display_get_registry(RENDERER_STATE.display),
+		wl_display_get_registry(renderer->display),
 		&REGISTRY_LISTENER,
-		NULL
+		renderer
 	);
 
-	wl_display_roundtrip(RENDERER_STATE.display);
-	wl_display_roundtrip(RENDERER_STATE.display);
+	wl_display_roundtrip(renderer->display);
+	wl_display_roundtrip(renderer->display);
 
-	ASSERT(RENDERER_STATE.display && RENDERER_STATE.compositor && RENDERER_STATE.shm &&
-		       RENDERER_STATE.layer_shell,
+	ASSERT(renderer->display && renderer->compositor && renderer->shm && renderer->layer_shell,
 	       "Renderer failed to initialize");
 
 	LOG_TRACE("renderer initialized");
 	const char **list = NULL;
-	size_t count = monitor_list_aloc(&list);
+	size_t count = monitor_list_aloc(renderer, &list);
 
 	for (size_t i = 0; i < count; i++) {
 		LOG_INFO("Detected monitor %s", list[i]);
 	}
 
-	monitor_list_free(list);
+	monitor_list_free(renderer, list);
 }

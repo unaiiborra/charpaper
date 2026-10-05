@@ -1,7 +1,9 @@
+#include "monitor/layer_surface/layer_surface.h"
+#include "charpaper/interface/renderer.h"
 #include "logs.h"
 #include "monitor/monitor.h"
 #include "protocols/wlr-layer-shell-unstable-v1-client-protocol.h"
-#include "state.h"
+#include "renderer.h"
 #include <stddef.h>
 
 /* Layer surface events */
@@ -41,15 +43,15 @@ static const struct zwlr_layer_surface_v1_listener LAYER_SURFACE_LISTENER = {
 	.closed = closed,
 };
 
-void monitor_configure_as_background_async(monitor_data_t *monitor)
+void monitor_configure_as_background_async(wayland_renderer *renderer, monitor_data_t *monitor)
 {
 	if (!monitor->output) {
 		return;
 	}
 
-	monitor->surface = wl_compositor_create_surface(RENDERER_STATE.compositor);
+	monitor->surface = wl_compositor_create_surface(renderer->compositor);
 	monitor->layer_surface = zwlr_layer_shell_v1_get_layer_surface(
-		RENDERER_STATE.layer_shell,
+		renderer->layer_shell,
 		monitor->surface,
 		monitor->output,
 		ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND,

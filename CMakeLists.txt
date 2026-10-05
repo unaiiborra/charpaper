@@ -27,6 +27,11 @@ target_compile_options(project_warnings INTERFACE
     $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor -Wold-style-cast>
 )
 
+add_library(charpaper_headers INTERFACE)
+target_include_directories(charpaper_headers INTERFACE
+        ${CMAKE_SOURCE_DIR}/headers
+)
+
 add_subdirectory(lib)
 add_subdirectory(renderer)
 add_subdirectory(daemon)
