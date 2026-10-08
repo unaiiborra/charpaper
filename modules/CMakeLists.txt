@@ -5,4 +5,5 @@ target_include_directories(charpaper_headers INTERFACE
 
 add_subdirectory(lib)
 add_subdirectory(wayland_renderer)
+add_subdirectory(engine)
 add_subdirectory(daemon)

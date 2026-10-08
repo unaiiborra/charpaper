@@ -38,7 +38,6 @@ static void renderer_step(wayland_renderer *renderer)
 static void config_monitor(monitor_data_t *monitor, chp_canvas_config_t cfg)
 {
 	monitor->config.drawer = cfg.drawer;
-	monitor->config.drawer_data = cfg.drawer_data;
 	monitor->config.is_animated = cfg.is_animated;
 }
 

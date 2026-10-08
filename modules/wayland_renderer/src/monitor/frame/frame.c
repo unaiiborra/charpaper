@@ -2,6 +2,7 @@
 #include "logs.h"
 #include "monitor/monitor.h"
 #include "monitor/shm_buffer/shm_buffer.h"
+#include "renderer.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -11,7 +12,7 @@
 
 const struct wl_callback_listener FRAME_LISTENER;
 
-static void std_draw(void *data, const chp_canvas_t *c, const chp_frame_info_t *info)
+static void std_draw(void *data, const chp_canvas_t *c, const chp_clockpoint_t *info)
 {
 	(void)data, (void)info;
 
@@ -20,7 +21,7 @@ static void std_draw(void *data, const chp_canvas_t *c, const chp_frame_info_t *
 	}
 }
 
-static chp_frame_info_t monitor_advance_clock(monitor_data_t *monitor, uint32_t time_ms)
+static chp_clockpoint_t monitor_advance_clock(monitor_data_t *monitor, uint32_t time_ms)
 {
 	uint32_t dt = monitor->has_last_time ? time_ms - monitor->last_time_ms : 0;
 
@@ -28,7 +29,7 @@ static chp_frame_info_t monitor_advance_clock(monitor_data_t *monitor, uint32_t 
 	monitor->has_last_time = true;
 	monitor->total_time += dt;
 
-	return (chp_frame_info_t){
+	return (chp_clockpoint_t){
 		.time_ms = monitor->total_time,
 		.dt_ms = dt,
 		.frame = monitor->frame++,
@@ -38,12 +39,13 @@ static chp_frame_info_t monitor_advance_clock(monitor_data_t *monitor, uint32_t 
 static shm_buffer_t *monitor_draw_frame_buffer(
 	wayland_renderer *renderer,
 	monitor_data_t *monitor,
-	chp_frame_info_t frame_info
+	chp_clockpoint_t frame_info
 )
 {
 	LOG_TRACE(
-		"monitor %d frame draw request %ldx%ld",
+		"monitor %d frame %ld draw request %ldx%ld",
 		monitor->id,
+		frame_info.frame,
 		monitor->width,
 		monitor->height
 	);
@@ -61,7 +63,7 @@ static shm_buffer_t *monitor_draw_frame_buffer(
 		monitor->height
 	);
 
-	drawer(monitor->config.drawer_data,
+	drawer(renderer->data,
 	       &(chp_canvas_t){
 		       .pixels = buffer->ptr,
 		       .width = monitor->width,
@@ -81,7 +83,7 @@ typedef struct {
 static void monitor_draw_frames(
 	wayland_renderer *renderer,
 	monitor_data_t *monitor,
-	chp_frame_info_t frame_info
+	chp_clockpoint_t frame_info
 )
 {
 	shm_buffer_t *buffer = monitor_draw_frame_buffer(renderer, monitor, frame_info);
@@ -127,7 +129,7 @@ void monitor_start_frame_loop_async(wayland_renderer *renderer, monitor_data_t *
 	monitor_draw_frames(
 		renderer,
 		monitor,
-		(chp_frame_info_t){
+		(chp_clockpoint_t){
 			.time_ms = monitor->total_time,
 			.dt_ms = 0,
 			.frame = monitor->frame++,

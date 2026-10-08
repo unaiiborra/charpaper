@@ -10,7 +10,6 @@
 typedef struct {
 	bool is_animated;
 	chp_canvas_drawer_t drawer;
-	void *drawer_data;
 } monitor_config_t;
 
 typedef struct {
