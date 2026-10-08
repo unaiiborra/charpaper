@@ -47,10 +47,15 @@ static int renderer_setup_monitor(
 	chp_canvas_config_t config
 )
 {
+	if (!renderer || !monitor_name) {
+		return -1;
+	}
+
 	monitor_data_t *monitor = NULL;
 
 	for (struct monitor_node *n = renderer->monitors.root; n; n = n->next) {
-		if (strcmp(n->monitor_data.info.name, monitor_name) == 0) {
+		if (n->monitor_data.info.name &&
+		    strcmp(n->monitor_data.info.name, monitor_name) == 0) {
 			monitor = &n->monitor_data;
 			break;
 		}
